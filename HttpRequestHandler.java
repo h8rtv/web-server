@@ -1,17 +1,13 @@
 import java.io.*;
 import java.net.*;
-import java.util.StringTokenizer;
+import java.util.*;
 
-public final class HttpRequest implements Runnable {
-    static class HttpCode {
-        static String NOT_FOUND = "404 Not Found";
-        static String OK = "200 OK";
-    }
+public final class HttpRequestHandler implements Runnable {
     final static String CRLF = "\r\n";
     private Socket socket;
     private String fileName;
 
-    HttpRequest(Socket socket) {
+    HttpRequestHandler(Socket socket) {
         this.socket = socket;
     }
 
@@ -44,11 +40,16 @@ public final class HttpRequest implements Runnable {
 
         StringTokenizer tokens = new StringTokenizer(requestLine);
         tokens.nextToken(); // Método HTTP
-        fileName = "." + tokens.nextToken();
+        String file = tokens.nextToken();
+        if (file.equals("/")) {
+            file = "/index.html";
+        }
+        fileName = "." + file;
     }
 
     private void parseHeaders(BufferedReader bufReader) throws Exception {
-        for (String headerLine = null; headerLine != null && headerLine.length() != 0; headerLine = bufReader.readLine()) {
+        System.out.println();
+        for (String headerLine = bufReader.readLine(); headerLine.length() != 0; headerLine = bufReader.readLine()) {
             System.out.println(headerLine);
         }
     }
@@ -93,20 +94,17 @@ public final class HttpRequest implements Runnable {
 
         String statusCode = null;
         String contentTypeLine = null;
-        String entityBody = null;
 
         FileInputStream inStreamFile = openFile(fileName);
         boolean fileExists = inStreamFile != null;
 
         if (fileExists) {
-            statusCode = HttpCode.OK;
+            statusCode = HttpCode.OK.toString();
             contentTypeLine = "Content-type: " + contentType(fileName);
         } else {
-            statusCode = HttpCode.NOT_FOUND;
+            statusCode = HttpCode.NOT_FOUND.toString();
             contentTypeLine = "Content-type: text/html";
-            entityBody = "<HTML>" +
-            "<HEAD><TITLE>Not Found</TITLE></HEAD>" +
-            "<BODY>Not Found</BODY></HTML>";
+            inStreamFile = openFile("./404.html");
         }
 
         // Headers
@@ -115,12 +113,8 @@ public final class HttpRequest implements Runnable {
         outStreamData.writeBytes(CRLF);
 
         // Body
-        if (fileExists) {
-            sendFile(inStreamFile, outStream);
-            inStreamFile.close();
-        } else {
-            outStreamData.writeBytes(entityBody + CRLF);
-        }
+        sendFile(inStreamFile, outStream);
+        inStreamFile.close();
         outStreamData.writeBytes(CRLF);
 
         outStreamData.close();

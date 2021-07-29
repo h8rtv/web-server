@@ -8,7 +8,7 @@ public final class WebServer {
         try {
             while (true) {
                 Socket client = server.accept();
-                HttpRequest request = new HttpRequest(client);
+                HttpRequestHandler request = new HttpRequestHandler(client);
                 Thread thread = new Thread(request);
                 thread.start();
             }
