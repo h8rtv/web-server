@@ -17,6 +17,7 @@ public final class HttpRequestHandler implements Runnable {
             processRequest();
         } catch (Exception error) {
             System.out.println(error);
+            error.printStackTrace();
         }
     }
 
@@ -83,7 +84,7 @@ public final class HttpRequestHandler implements Runnable {
     private static void sendFile(FileInputStream inStreamFile, OutputStream outStream) throws Exception {
         byte[] buffer = new byte[1024];
 
-        for (int bytes = 0; bytes != -1; bytes = inStreamFile.read(buffer)) {
+        for (int bytes = inStreamFile.read(buffer); bytes != -1; bytes = inStreamFile.read(buffer)) {
             outStream.write(buffer, 0, bytes);
         }
     }
@@ -114,14 +115,13 @@ public final class HttpRequestHandler implements Runnable {
 
         // Body
         sendFile(inStreamFile, outStream);
-        inStreamFile.close();
         outStreamData.writeBytes(CRLF);
 
+        inStreamFile.close();
         outStreamData.close();
     }
 
     private void processRequest() throws Exception {
-
         parseRequest();
         buildResponse();
 
