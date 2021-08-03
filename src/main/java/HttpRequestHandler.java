@@ -4,10 +4,13 @@ import java.util.*;
 
 public final class HttpRequestHandler implements Runnable {
     final static String CRLF = "\r\n";
+    final static String pathToResources = "./res/";
+    final static String NOT_FOUND_HTML = "<html><head><title>Not Found</title></head><body>404 Not Found</body></html>";
+
     private Socket socket;
     private String fileName;
 
-    HttpRequestHandler(Socket socket) {
+    public HttpRequestHandler(Socket socket) {
         this.socket = socket;
     }
 
@@ -27,7 +30,7 @@ public final class HttpRequestHandler implements Runnable {
                 return null;
             }
 
-            FileInputStream inStreamFile = new FileInputStream(fileName);
+            FileInputStream inStreamFile = new FileInputStream(pathToResources + fileName);
             return inStreamFile;
         } catch (FileNotFoundException e) {
             return null;
@@ -62,6 +65,8 @@ public final class HttpRequestHandler implements Runnable {
 
         parseRequestLine(bufReader);
         parseHeaders(bufReader);
+
+        socket.shutdownInput();
     }
 
     private static String contentType(String fileName) {
@@ -114,11 +119,15 @@ public final class HttpRequestHandler implements Runnable {
         outStreamData.writeBytes(CRLF);
 
         // Body
-        sendFile(inStreamFile, outStream);
+        if (inStreamFile != null) {
+            sendFile(inStreamFile, outStream);
+            inStreamFile.close();
+        } else {
+            outStreamData.writeBytes(NOT_FOUND_HTML + CRLF);
+        }
         outStreamData.writeBytes(CRLF);
 
-        inStreamFile.close();
-        outStreamData.close();
+        socket.shutdownOutput();
     }
 
     private void processRequest() throws Exception {
@@ -127,5 +136,4 @@ public final class HttpRequestHandler implements Runnable {
 
         socket.close();
     }
-    
 }
