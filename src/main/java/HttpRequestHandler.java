@@ -106,10 +106,10 @@ public final class HttpRequestHandler implements Runnable {
 
         if (fileExists) {
             statusCode = HttpCode.OK.toString();
-            contentTypeLine = "Content-type: " + contentType(fileName);
+            contentTypeLine = "Content-Type: " + contentType(fileName);
         } else {
             statusCode = HttpCode.NOT_FOUND.toString();
-            contentTypeLine = "Content-type: text/html";
+            contentTypeLine = "Content-Type: text/html";
             inStreamFile = openFile("./404.html");
         }
 
@@ -131,8 +131,13 @@ public final class HttpRequestHandler implements Runnable {
     }
 
     private void processRequest() throws Exception {
-        parseRequest();
-        buildResponse();
+        InputStream inStream = socket.getInputStream(); 
+        if (inStream.available() > 0) {
+            parseRequest();
+            buildResponse();
+        } else {
+            System.out.println("\nEmpty request");
+        }
 
         socket.close();
     }
