@@ -132,11 +132,10 @@ public final class HttpRequestHandler implements Runnable {
 
     private void processRequest() throws Exception {
         InputStream inStream = socket.getInputStream(); 
-        if (inStream.available() > 0) {
+        
+        if (inStream.available() > 0 && socket.isConnected()) {
             parseRequest();
             buildResponse();
-        } else {
-            System.out.println("\nEmpty request");
         }
 
         socket.close();
